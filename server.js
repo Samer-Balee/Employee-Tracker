@@ -1,17 +1,11 @@
 
-
 const inquirer = require("inquirer");
 
 const db = require('./lib/conection');
 
-
-
-
 const questions = require('./lib/questions');
 
 const table = require('console.table');
-
-// start();
 
 db.connect(err => {
     if (err) throw err;
@@ -34,7 +28,7 @@ db.connect(err => {
         case "View All Employees":
             viewEmployees();
             break;
-        case "View All Employees by Ddepartment":
+        case "View All Employees by Department":
             viewEmpByDepartment();
             break;
         case "View All Employees by Manager":
@@ -82,23 +76,41 @@ db.connect(err => {
 
 }
 
-// async function addEmployee() {
-//     let qry = "SELECT id as value, CONCAT(first_name, ' ', last_name) as name FROM employee"
-//     db.query(qry, async (err, employees) => {
-//         qry = "SELECT id as value, title as name FROM roles"
-//         db.query(qry, async (err, roles) => {
-//             // get the name, category, starting bid from user
-//             const newEmp = await inquirer.prompt(questions.addEmployee(roles, employees));
-//             qry = "INSERT INTO employee SET ?"
-//             db.query(qry, newEmp, function (err) {
-//                 if (err) throw err;
-//                 console.log("New employee was added successfully!");
-//                 // re-prompt the user for if they want to bid or post
-//                 start();
-//             });
-//         })
-//     })
-// }
+function viewEmployees() {
+    db.query(`SELECT employee.id, employee.first_name, employee.last_name, 
+    roles.title AS title, roles.salary, department.department_name AS department 
+    FROM employee  JOIN roles ON employee.role_id = roles.id 
+    JOIN department ON roles.department_id = department.id`, function (err, res) {
+        if (err) throw err;
+       
+        console.table(res);
+        start();
+    });
+}
+
+function viewEmpByDepartment() {
+    db.query("SELECT * FROM department", async (err, department) => {
+        
+        const {
+            departmentName
+        } = await inquirer.prompt([{
+            type: "list",
+            message: "Select a Department:",
+            name: "departmentName",
+            choices: () => {
+                return department.map((department) => department.department_name);
+            }
+        }]);
+        db.query(`SELECT employee.id, employee.first_name, employee.last_name, roles.title, roles.salary, department.department_name AS department
+         FROM employee LEFT JOIN roles ON employee.role_id = roles.id 
+        LEFT JOIN department ON roles.department_id = department.id`, function (err, res) {
+            if (err) throw err;
+            
+            console.table(res.filter((name) => departmentName === name.department));
+            start();
+        });
+    })
+}
 
 
 
