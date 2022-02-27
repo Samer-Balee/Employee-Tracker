@@ -92,6 +92,8 @@ function viewEmployees() {
     });
 }
 
+//SELECT CONCAT (manager.first_name, " ", manager.last_name) JOIN employee AS manager ON employee.manager_id = manager.id;
+
 function viewEmpByDepartment() {
     db.query("SELECT * FROM department", async (err, department) => {
 
@@ -123,6 +125,8 @@ function viewEmpByManager() {
 
         if (err) throw err;
         // get the name, category, starting bid from user
+
+
         const { managerId } = await inquirer.prompt([
             {
                 type: "list",
@@ -131,8 +135,9 @@ function viewEmpByManager() {
                 choices: () => {
                     return employee.map((manager) => manager.manager_id);
                 },
-            },]);
-        db.query(`SELECT first_name, last_name FROM employee WHERE manager_id=${manager_id}`, function (err, res) {
+            },
+        ]);
+        db.query(`SELECT first_name, last_name FROM employee WHERE manager_id=${managerId}`, function (err, res) {
             if (err) throw err;
             // Log all results of the SELECT statement
             console.table(res);
@@ -144,12 +149,17 @@ function viewEmpByManager() {
 
 async function addEmployee() {
     let qry = "SELECT id as value, CONCAT(first_name, ' ', last_name) as name FROM employee"
+
     db.query(qry, async (err, employees) => {
+
         qry = "SELECT id as value, title as name FROM roles"
+
         db.query(qry, async (err, roles) => {
             // get the name, category, starting bid from user
             const newEmp = await inquirer.prompt(questions.addEmployee(roles, employees));
+
             qry = "INSERT INTO employee SET ?"
+
             db.query(qry, newEmp, function (err) {
                 if (err) throw err;
                 console.log("New employee was added successfully!");
@@ -162,3 +172,47 @@ async function addEmployee() {
 
 
 
+function removeEmployee() {
+    db.query("SELECT * FROM employee", async (err, employee) => {
+
+        if (err) throw err;
+
+        const employees = employee.map(({ id, first_name, last_name }) => ({ name: first_name + " " + last_name, value: id }));
+
+        const { employeeId } = await inquirer.prompt([
+            {
+                type: "list",
+                message: "Select an employee to delete:",
+                name: "employeeName",
+                choices: employees
+            }]);
+        console.log(employeeId);
+
+        db.query(`DELETE FROM employee WHERE id = ${employeeId}`,
+            function (err, res) {
+                if (err) throw err;
+                // Log all results of the SELECT statement
+                console.log('Employee has been deleted successfully')
+                start();
+            });
+    })
+}
+
+function viewDepartments() {
+    db.query("SELECT * FROM department", function (err, res) {
+        if (err) throw err;
+        // Log all results of the SELECT statement
+        console.table(res);
+        start();
+    });
+}
+
+function viewRoles() {
+    db.query(`SELECT roles.id, roles.title, roles.salary , department.department_name AS department FROM roles 
+    JOIN department ON roles.department_id = roles.id`, function (err, res) {
+        if (err) throw err;
+        // Log all results of the SELECT statement
+        console.table(res);
+        start();
+    });
+}
