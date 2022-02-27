@@ -6,6 +6,7 @@ const db = require('./lib/conection');
 const questions = require('./lib/questions');
 
 const table = require('console.table');
+const { addDepartmentQuestions } = require("./lib/questions");
 
 db.connect(err => {
     if (err) throw err;
@@ -25,43 +26,43 @@ displayTitle = () => {
 async function start() {
     const userChoice = await inquirer.prompt(questions.firstQuestion);
     switch (userChoice.choices) {
-        case "View All Employees":
+        case "View All Employees":  // done
             viewEmployees();
             break;
-        case "View All Employees by Department":
+        case "View All Employees by Department":  // done
             viewEmpByDepartment();
             break;
-        case "View All Employees by Manager":
+        case "View All Employees by Manager": // still error
             viewEmpByManager();
             break;
-        case "Add Employee":
+        case "Add an Employee": // done
             addEmployee();
             break;
-        case "Remove Employee":
+        case "Remove an Employee":  // done
             removeEmployee();
             break;
-        case "Update Employee Role":
+        case "Update an Employee Role":  // still error
             updateEmpRole();
             break;
-        case "Update Employee Manager":
+        case "Update Employee Manager":  // not added
             updateEmpByManager();
             break;
-        case "View All Roles":
+        case "View All Roles":  // done
             viewRoles();
             break;
-        case "Add Role":
+        case "Add a Role":  // still error
             addRole();
             break;
-        case "Remove Role":
+        case "Remove a Role": // not added yet
             removeRole();
             break;
-        case "View All Departments":
+        case "View All Departments":  // done
             viewDepartments();
             break;
-        case "Add Department":
+        case "Add a Department":  // done
             addDepartment();
             break;
-        case "Remove Department":
+        case "Remove a Department":  // done
             removeDepartment();
             break;
         case "View total utilized budget by department":
@@ -92,7 +93,6 @@ function viewEmployees() {
     });
 }
 
-//SELECT CONCAT (manager.first_name, " ", manager.last_name) JOIN employee AS manager ON employee.manager_id = manager.id;
 
 function viewEmpByDepartment() {
     db.query("SELECT * FROM department", async (err, department) => {
@@ -121,23 +121,22 @@ function viewEmpByDepartment() {
 }
 
 function viewEmpByManager() {
-    db.query("SELECT * FROM employee", async (err, employee) => {
+    db.query(`SELECT first_name, last_name, manager_id FROM employee
+    JOIN employee ON employee.manager_id = employee.id`, async (err, employee) => {
 
         if (err) throw err;
         // get the name, category, starting bid from user
-
+        const managers = employee.map(({ id, first_name, last_name }) => ({ name: first_name + " " + last_name, value: id }));
 
         const { managerId } = await inquirer.prompt([
             {
                 type: "list",
                 message: "Choose a manager:",
-                name: "manager_id",
-                choices: () => {
-                    return employee.map((manager) => manager.manager_id);
-                },
+                name: "managerId",
+                choices: managers
             },
         ]);
-        db.query(`SELECT first_name, last_name FROM employee WHERE manager_id=${managerId}`, function (err, res) {
+        db.query(`SELECT first_name, last_name FROM employee WHERE manager_id= ?`, managerId, function (err, res) {
             if (err) throw err;
             // Log all results of the SELECT statement
             console.table(res);
@@ -183,10 +182,9 @@ function removeEmployee() {
             {
                 type: "list",
                 message: "Select an employee to delete:",
-                name: "employeeName",
+                name: "employeeId",
                 choices: employees
             }]);
-        console.log(employeeId);
 
         db.query(`DELETE FROM employee WHERE id = ${employeeId}`,
             function (err, res) {
@@ -209,10 +207,125 @@ function viewDepartments() {
 
 function viewRoles() {
     db.query(`SELECT roles.id, roles.title, roles.salary , department.department_name AS department FROM roles 
-    JOIN department ON roles.department_id = roles.id`, function (err, res) {
+    LEFT JOIN department ON roles.department_id = department.id`, function (err, res) {
         if (err) throw err;
         // Log all results of the SELECT statement
         console.table(res);
         start();
     });
 }
+
+async function addDepartment() {
+    const departmentDetails = await inquirer.prompt(addDepartmentQuestions)
+
+    db.query(`INSERT INTO department SET ?`, {
+        department_name: departmentDetails.departmentAddName
+    },
+        function (err) {
+            if (err) throw err;
+            console.log("New department was added successfully!");
+            // re-prompt the user for if they want to bid or post
+            start();
+        }
+    );
+}
+
+async function addRole() {
+    const roleDetails = await inquirer.prompt(addNewRole)
+    db.query("INSERT INTO role SET ?", {
+        title: roleDetails.titleRole,
+        salary: roleDetails.salary,
+        department_id: roleDetails.departmentIdRole
+    },
+        function (err) {
+            if (err) throw err;
+            console.log("New department was added successfully!");
+            // re-prompt the user for if they want to bid or post
+            start();
+        }
+    );
+}
+
+function updateEmpRole() {
+    // query for the category choices
+    db.query("SELECT * FROM employee", async (err, employee) => {
+        if (err) throw err;
+        const employees = data.map(({ id, first_name, last_name }) => ({ name: first_name + " " + last_name, value: id }));
+        const roles = data.map(({ id, title }) => ({ name: title, value: id }));
+        // get the name, category, starting bid from user
+        const {
+            worker,
+            newrole
+        } = await inquirer.prompt([
+            {
+                type: "list",
+                message: "Choose an employee to update:",
+                name: "worker",
+                choices: employees
+            },
+            {
+                type: "list",
+                message: "What is this employee's new role?",
+                name: "newrole",
+                choices: roles
+            }
+        ]);
+        db.query(
+            "UPDATE employee SET ? WHERE ?",
+            [{
+                role_id: newrole,
+            },
+            {
+                last_name: worker,
+            },
+            ],
+            function (err, res) {
+                if (err) throw err;
+                console.log(res.affectedRows + " products updated!\n");
+                // Call deleteProduct AFTER the UPDATE completes
+                console.table(employee);
+                start();
+            }
+        );
+    })
+}
+
+function removeDepartment() {
+    db.query(`SELECT * FROM department`, async (err, res) => {
+        if (err) throw err;
+
+        const dept = res.map(({ department_name, id }) => ({ name: department_name, value: id }));
+        console.log(dept);
+
+        const deptChoice = await inquirer.prompt(
+            {
+                type: 'list',
+                name: 'deptId',
+                message: "Which department would you like to delete?",
+                choices: dept
+            })
+        console.log(deptChoice);
+        db.query(`DELETE FROM department WHERE id = ?`, deptChoice.deptId , (err, result) => {
+            if (err) throw err;
+            console.log("Successfully deleted!");
+            start();
+            
+        })
+   
+    })
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
