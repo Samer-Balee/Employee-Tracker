@@ -1,11 +1,12 @@
-
+// Import inquirer package
 const inquirer = require("inquirer");
-
+// import connection module
 const db = require('./lib/conection');
-
+// import questions module
 const questions = require('./lib/questions');
 
 const table = require('console.table');
+// Import initial questions to start the app
 const { addDepartmentQuestions } = require("./lib/questions");
 
 db.connect(err => {
@@ -22,7 +23,7 @@ displayTitle = () => {
     console.log("***********************************")
     start();
 };
-
+// conditions depending on user choice
 async function start() {
     const userChoice = await inquirer.prompt(questions.firstQuestion);
     switch (userChoice.choices) {
@@ -32,28 +33,25 @@ async function start() {
         case "View All Employees by Department":  // done
             viewEmpByDepartment();
             break;
-        case "View All Employees by Manager": // still error
-            viewEmpByManager();
-            break;
         case "Add an Employee": // done
             addEmployee();
             break;
         case "Remove an Employee":  // done
             removeEmployee();
             break;
-        case "Update an Employee Role":  // still error
+        case "Update an Employee Role":  // done
             updateEmpRole();
             break;
-        case "Update Employee Manager":  // not added
+        case "Update an Employee Manager":  // done
             updateEmpByManager();
             break;
         case "View All Roles":  // done
             viewRoles();
             break;
-        case "Add a Role":  // still error
+        case "Add a Role":  // done
             addRole();
             break;
-        case "Remove a Role": // not added yet
+        case "Remove a Role": // done
             removeRole();
             break;
         case "View All Departments":  // done
@@ -65,7 +63,7 @@ async function start() {
         case "Remove a Department":  // done
             removeDepartment();
             break;
-        case "View total utilized budget by department":
+        case "View total utilized budget by department": // done
             viewUtilBudget();
             break;
         case "Quit":
@@ -76,7 +74,7 @@ async function start() {
     }
 
 }
-
+// function to view all employees
 function viewEmployees() {
 
 
@@ -93,7 +91,7 @@ function viewEmployees() {
     });
 }
 
-
+// function to view all employees by department
 function viewEmpByDepartment() {
     db.query("SELECT * FROM department", async (err, department) => {
 
@@ -120,32 +118,7 @@ function viewEmpByDepartment() {
     })
 }
 
-function viewEmpByManager() {
-    db.query(`SELECT first_name, last_name, manager_id FROM employee
-    JOIN employee ON employee.manager_id = employee.id`, async (err, employee) => {
-
-        if (err) throw err;
-        // get the name, category, starting bid from user
-        const managers = employee.map(({ id, first_name, last_name }) => ({ name: first_name + " " + last_name, value: id }));
-
-        const { managerId } = await inquirer.prompt([
-            {
-                type: "list",
-                message: "Choose a manager:",
-                name: "managerId",
-                choices: managers
-            },
-        ]);
-        db.query(`SELECT first_name, last_name FROM employee WHERE manager_id= ?`, managerId, function (err, res) {
-            if (err) throw err;
-            // Log all results of the SELECT statement
-            console.table(res);
-            start();
-        });
-    })
-
-}
-
+// function to add employee
 async function addEmployee() {
     let qry = "SELECT id as value, CONCAT(first_name, ' ', last_name) as name FROM employee"
 
@@ -162,7 +135,7 @@ async function addEmployee() {
             db.query(qry, newEmp, function (err) {
                 if (err) throw err;
                 console.log("New employee was added successfully!");
-              
+
                 start();
             });
         })
@@ -170,7 +143,7 @@ async function addEmployee() {
 }
 
 
-
+// function to remove employee
 function removeEmployee() {
     db.query("SELECT * FROM employee", async (err, employee) => {
 
@@ -195,7 +168,7 @@ function removeEmployee() {
             });
     })
 }
-
+// function to view all departments
 function viewDepartments() {
     db.query("SELECT * FROM department", function (err, res) {
         if (err) throw err;
@@ -204,7 +177,7 @@ function viewDepartments() {
         start();
     });
 }
-
+// function to view all roles
 function viewRoles() {
     db.query(`SELECT roles.id, roles.title, roles.salary , department.department_name AS department FROM roles 
     LEFT JOIN department ON roles.department_id = department.id`, function (err, res) {
@@ -215,6 +188,7 @@ function viewRoles() {
     });
 }
 
+// function to add a new department
 async function addDepartment() {
     const departmentDetails = await inquirer.prompt(addDepartmentQuestions)
 
@@ -224,12 +198,12 @@ async function addDepartment() {
         function (err) {
             if (err) throw err;
             console.log("New department was added successfully!");
-          
+
             start();
         }
     );
 }
-
+// function to add a new role
 async function addRole() {
     const roleChoice = await inquirer.prompt([
         {
@@ -237,32 +211,33 @@ async function addRole() {
             name: 'role',
             message: "What role do you want to add?",
             validate: addRole => {
-            if (addRole) {
-            return true;
-            } else {
-                console.log('Please enter a role');
-                return false;
+                if (addRole) {
+                    return true;
+                } else {
+                    console.log('Please enter a role');
+                    return false;
+                }
             }
-         }
         },
         {
             type: 'input',
             name: 'salary',
             message: "What is the salary of this role?",
-          }
+        }
     ])
     const params = [roleChoice.role, roleChoice.salary];
+
     db.query(`SELECT department_name, id FROM department`, async (err, data) => {
         if (err) throw err;
-        const deptartments = data.map(({ name, id }) => ({ name: name, value: id }));
-        
+        const deptartments = data.map(({ department_name, id }) => ({ name: department_name, value: id }));
+
         const deptChoice = await inquirer.prompt(
             {
                 type: 'list',
                 name: 'dept',
                 message: "What department is this role in?",
                 choices: deptartments
-              }
+            }
         )
         const department = deptChoice.dept;
         params.push(department);
@@ -277,12 +252,37 @@ async function addRole() {
 
 
 }
+// function to remove a role
+function removeRole() {
+    db.query(`SELECT * FROM roles`, async (err, res) => {
+        if (err) throw err;
+
+        const roles = res.map(({ title, id }) => ({ name: title, value: id }));
+
+        const roleChoice = await inquirer.prompt(
+            {
+                type: 'list',
+                name: 'roleId',
+                message: "Which role would you like to delete?",
+                choices: roles
+            })
+
+        db.query(`DELETE FROM roles WHERE id = ?`, roleChoice.roleId, (err, result) => {
+            if (err) throw err;
+            console.log("Successfully deleted!");
+            start();
+
+        })
+
+    })
+}
 
 
-
+// function to update employee's role
 function updateEmpRole() {
     db.query("SELECT * FROM employee", async (err, data) => {
         if (err) throw err;
+
         const employees = data.map(({ id, first_name, last_name }) => ({ name: first_name + " " + last_name, value: id }));
         const empChoice = await inquirer.prompt(
             {
@@ -299,7 +299,7 @@ function updateEmpRole() {
 
         db.query(roleSql, async (err, data) => {
             if (err) throw err;
-
+            // Get all roles for choices
             const roles = data.map(({ id, title }) => ({ name: title, value: id }));
 
             const roleChoice = await inquirer.prompt(
@@ -326,15 +326,59 @@ function updateEmpRole() {
 
     })
 }
+// function to update employee's manager
+function updateEmpByManager() {
+    db.query(`SELECT * FROM employee`, async (err, data) => {
+        if (err) throw err;
+        // Get all employees full name for choices
+        const employees = data.map(({ id, first_name, last_name }) => ({ name: first_name + " " + last_name, value: id }));
+
+        const empChoice = await inquirer.prompt(
+            {
+                type: 'list',
+                name: 'name',
+                message: "Which employee would you like to update?",
+                choices: employees
+            }
+        )
+        const employee = empChoice.name;
+        const params = [];
+        params.push(employee);
+
+        db.query(`SELECT * FROM employee`, async (err, data) => {
+            if (err) throw err;
+
+            const managers = data.map(({ id, first_name, last_name }) => ({ name: first_name + " " + last_name, value: id }));
+            const managerCoice = await inquirer.prompt(
+                {
+                    type: 'list',
+                    name: 'manager',
+                    message: "Who is the employee's manager?",
+                    choices: managers
+                })
+            const manager = managerCoice.manager;
+            params.push(manager);
+
+            let employee = params[0]
+            params[0] = manager
+            params[1] = employee
+
+            db.query(`UPDATE employee SET manager_id = ? WHERE id = ?`, params, (err, result) => {
+                if (err) throw err;
+                console.log("Employee' manager has been updated!");
+                start();
+            })
+        })
+    })
+}
 
 
-
+// function to remove a department
 function removeDepartment() {
     db.query(`SELECT * FROM department`, async (err, res) => {
         if (err) throw err;
-
+        // Get all departments for choices
         const dept = res.map(({ department_name, id }) => ({ name: department_name, value: id }));
-        console.log(dept);
 
         const deptChoice = await inquirer.prompt(
             {
@@ -343,7 +387,7 @@ function removeDepartment() {
                 message: "Which department would you like to delete?",
                 choices: dept
             })
-        console.log(deptChoice);
+
         db.query(`DELETE FROM department WHERE id = ?`, deptChoice.deptId, (err, result) => {
             if (err) throw err;
             console.log("Successfully deleted!");
@@ -353,7 +397,7 @@ function removeDepartment() {
 
     })
 }
-
+// function to view the total utilized budget of a department
 function viewUtilBudget() {
     db.query(`SELECT department_id AS id, 
     department.department_name AS department,
