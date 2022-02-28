@@ -22,21 +22,21 @@
   ## Usage
    This application will allow users to view, add, and edit employees, roles, departments, and managers.
 
-   - Schema for related tables
+  - Schema for related tables
 
     ![screenshot-tables-schema](images/screenshot-tables-schema.png)
 
-    - Screenshot for terminal and exsample of viewing data
+  - Screenshot for terminal and exsample of viewing data
 
     ![screenshot-terminal](images/screenshot-terminal.PNG)
   
   ## Technologies
 
-    - JavaScript                    
-    - Git
-    - NodeJs
-    - MySQL
-    - NPM
+  - JavaScript                    
+  - Git
+  - NodeJs
+  - MySQL
+  - NPM
 
   ## License
    For information about this license visit: [MIT](https://opensource.org/licenses/MIT)
