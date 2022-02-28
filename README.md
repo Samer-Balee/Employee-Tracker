@@ -1,9 +1,10 @@
- # Employee-Tracker [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+# Employee-Tracker [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-  ## Description
+## Description
 
    A command-line application to manage a company's employee database, using Node.js, Inquirer, and MySQL.
 
+  A link to a walkthrough video that demonstrates the functionality of the app is here: [video](assets/records/demo.webm)
 
   ## Tables of Contents
   * [Instalation](#instalation)
@@ -18,17 +19,20 @@
 
    The user should clone the repository from GitHub. This application requires Node.js, Inquirer, console.table and mysql2. To start application run npm start. To view database from MySQL run mysql -u root -p.
 
+  - Below is a demo for using this app:
+
+  ![gif](assets/records/gif.gif)
   
   ## Usage
    This application will allow users to view, add, and edit employees, roles, departments, and managers.
 
-  - Schema for related tables
+- Schema for related tables
 
-    ![screenshot-tables-schema](images/screenshot-tables-schema.png)
+![screenshot-tables-schema](images/screenshot-tables-schema.png)
 
-  - Screenshot for terminal and exsample of viewing data
+- Screenshot for terminal and example of viewing data
 
-    ![screenshot-terminal](images/screenshot-terminal.PNG)
+![screenshot-terminal](images/screenshot-terminal.PNG)
   
   ## Technologies
 
