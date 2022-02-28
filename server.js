@@ -401,7 +401,7 @@ function removeDepartment() {
 function viewUtilBudget() {
     db.query(`SELECT department_id AS id, 
     department.department_name AS department,
-    SUM(salary) AS budget
+    SUM (salary) AS budget
     FROM  roles  
     JOIN department ON roles.department_id = department.id GROUP BY  department_id` , (err, res) => {
         if (err) throw err;
