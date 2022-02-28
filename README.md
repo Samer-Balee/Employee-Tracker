@@ -4,7 +4,7 @@
 
    A command-line application to manage a company's employee database, using Node.js, Inquirer, and MySQL.
 
-  A link to a walkthrough video that demonstrates the functionality of the app is here: [video](assets/records/demo.webm)
+  A link to a walkthrough video that demonstrates the functionality of the app is here: [video](assets/records/demo.mp4)
 
   ## Tables of Contents
   * [Instalation](#instalation)
@@ -28,11 +28,11 @@
 
 - Schema for related tables
 
-![screenshot-tables-schema](images/screenshot-tables-schema.png)
+   ![screenshot-tables-schema](assets/images/screenshot-tables-schema.png)
 
 - Screenshot for terminal and example of viewing data
 
-![screenshot-terminal](images/screenshot-terminal.PNG)
+   ![screenshot-terminal](assets/images/screenshot-terminal.PNG)
   
   ## Technologies
 
