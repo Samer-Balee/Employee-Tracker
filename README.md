@@ -24,11 +24,11 @@
 
    - Schema for related tables
 
-    ![screenshot-tables-schema](assets/images/screenshot-tables-schema.png)
+    ![screenshot-tables-schema](images/screenshot-tables-schema.png)
 
     - Screenshot for terminal and exsample of viewing data
 
-    ![screenshot-terminal](assets/images/screenshot-terminal.PNG)
+    ![screenshot-terminal](images/screenshot-terminal.PNG)
   
   ## Technologies
 
