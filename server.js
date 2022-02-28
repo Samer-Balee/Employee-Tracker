@@ -162,7 +162,7 @@ async function addEmployee() {
             db.query(qry, newEmp, function (err) {
                 if (err) throw err;
                 console.log("New employee was added successfully!");
-                // re-prompt the user for if they want to bid or post
+              
                 start();
             });
         })
@@ -224,71 +224,110 @@ async function addDepartment() {
         function (err) {
             if (err) throw err;
             console.log("New department was added successfully!");
-            // re-prompt the user for if they want to bid or post
+          
             start();
         }
     );
 }
 
 async function addRole() {
-    const roleDetails = await inquirer.prompt(addNewRole)
-    db.query("INSERT INTO role SET ?", {
-        title: roleDetails.titleRole,
-        salary: roleDetails.salary,
-        department_id: roleDetails.departmentIdRole
-    },
-        function (err) {
+    const roleChoice = await inquirer.prompt([
+        {
+            type: 'input',
+            name: 'role',
+            message: "What role do you want to add?",
+            validate: addRole => {
+            if (addRole) {
+            return true;
+            } else {
+                console.log('Please enter a role');
+                return false;
+            }
+         }
+        },
+        {
+            type: 'input',
+            name: 'salary',
+            message: "What is the salary of this role?",
+          }
+    ])
+    const params = [roleChoice.role, roleChoice.salary];
+    db.query(`SELECT department_name, id FROM department`, async (err, data) => {
+        if (err) throw err;
+        const deptartments = data.map(({ name, id }) => ({ name: name, value: id }));
+        
+        const deptChoice = await inquirer.prompt(
+            {
+                type: 'list',
+                name: 'dept',
+                message: "What department is this role in?",
+                choices: deptartments
+              }
+        )
+        const department = deptChoice.dept;
+        params.push(department);
+
+        db.query(`INSERT INTO roles (title, salary, department_id)
+        VALUES (?, ?, ?)` , params, (err, result) => {
             if (err) throw err;
-            console.log("New department was added successfully!");
-            // re-prompt the user for if they want to bid or post
+            console.log('Successfuly added a role');
             start();
-        }
-    );
+        })
+    })
+
+
 }
 
+
+
 function updateEmpRole() {
-    // query for the category choices
-    db.query("SELECT * FROM employee", async (err, employee) => {
+    db.query("SELECT * FROM employee", async (err, data) => {
         if (err) throw err;
         const employees = data.map(({ id, first_name, last_name }) => ({ name: first_name + " " + last_name, value: id }));
-        const roles = data.map(({ id, title }) => ({ name: title, value: id }));
-        // get the name, category, starting bid from user
-        const {
-            worker,
-            newrole
-        } = await inquirer.prompt([
+        const empChoice = await inquirer.prompt(
             {
-                type: "list",
-                message: "Choose an employee to update:",
-                name: "worker",
+                type: 'list',
+                name: 'name',
+                message: "Which employee would you like to update?",
                 choices: employees
-            },
-            {
-                type: "list",
-                message: "What is this employee's new role?",
-                name: "newrole",
-                choices: roles
-            }
-        ]);
-        db.query(
-            "UPDATE employee SET ? WHERE ?",
-            [{
-                role_id: newrole,
-            },
-            {
-                last_name: worker,
-            },
-            ],
-            function (err, res) {
+            })
+        const employee = empChoice.name;
+        const params = [];
+        params.push(employee);
+
+        const roleSql = `SELECT * FROM roles`;
+
+        db.query(roleSql, async (err, data) => {
+            if (err) throw err;
+
+            const roles = data.map(({ id, title }) => ({ name: title, value: id }));
+
+            const roleChoice = await inquirer.prompt(
+                {
+                    type: 'list',
+                    name: 'role',
+                    message: "What is the employee's new role?",
+                    choices: roles
+                })
+            const role = roleChoice.role;
+            params.push(role);
+
+            let employee = params[0]
+            params[0] = role
+            params[1] = employee
+
+            db.query(`UPDATE employee SET role_id = ? WHERE id = ?`, params, (err, result) => {
                 if (err) throw err;
-                console.log(res.affectedRows + " products updated!\n");
-                // Call deleteProduct AFTER the UPDATE completes
-                console.table(employee);
+                console.log("Employee's role has been updated!");
                 start();
-            }
-        );
+            })
+        })
+
+
     })
 }
+
+
 
 function removeDepartment() {
     db.query(`SELECT * FROM department`, async (err, res) => {
@@ -305,13 +344,25 @@ function removeDepartment() {
                 choices: dept
             })
         console.log(deptChoice);
-        db.query(`DELETE FROM department WHERE id = ?`, deptChoice.deptId , (err, result) => {
+        db.query(`DELETE FROM department WHERE id = ?`, deptChoice.deptId, (err, result) => {
             if (err) throw err;
             console.log("Successfully deleted!");
             start();
-            
+
         })
-   
+
+    })
+}
+
+function viewUtilBudget() {
+    db.query(`SELECT department_id AS id, 
+    department.department_name AS department,
+    SUM(salary) AS budget
+    FROM  roles  
+    JOIN department ON roles.department_id = department.id GROUP BY  department_id` , (err, res) => {
+        if (err) throw err;
+        console.table(res);
+        start();
     })
 }
 
